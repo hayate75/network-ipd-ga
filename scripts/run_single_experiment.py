@@ -1,10 +1,27 @@
-# run_single_experiment.py
+# scripts/run_single_experiment.py
 from __future__ import annotations
 import argparse
+import logging
 from pathlib import Path
+import pickle
 
-from network_ipd_ga.simulation import run_simulation, Topology, ModelType
 from network_ipd_ga.config_loader import load_config
+from network_ipd_ga.simulation import run_simulation
+
+def setup_logging(log_dir: Path, output_base: str, seed: int):
+    fname = f"{output_base}_seed{seed}.log"
+    log_file = log_dir / "logs" / fname
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        handlers=[
+            logging.StreamHandler(),                 # 標準出力
+            logging.FileHandler(log_file, encoding="utf-8"),  # ログファイル
+        ],
+    )
+    logging.info(f"Logging initialized → {log_file}")
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -15,11 +32,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--config",
         type=str,
-        default="config/config.yml",
+        required=True,
         help="Path to the YAML configuration file.",
     )
 
-    # 乱数シード
+    # 乱数シード（必須）
     parser.add_argument(
         "--seed",
         type=int,
@@ -27,15 +44,8 @@ def parse_args() -> argparse.Namespace:
         help="Random seed for the simulation.",
     )
 
-    # 出力ログファイル（結果CSV）
-    parser.add_argument(
-        "--output",
-        type=str,
-        default="",
-        help="Output CSV filename. If empty, auto-generate from config settings.",
-    )
-
     return parser.parse_args()
+
 
 def main() -> None:
     args = parse_args()
@@ -43,8 +53,8 @@ def main() -> None:
     # 設定ファイル読み込み
     cfg = load_config(Path(args.config))
 
-    # 実行
-    df, graph, agents = run_simulation(
+    # シミュレーション実行
+    df, graph, agents, node_df = run_simulation(
         topology=cfg.topology,
         num_agents=cfg.num_agents,
         generations=cfg.generations,
@@ -57,15 +67,48 @@ def main() -> None:
         seed=args.seed,
     )
 
-    # 出力ファイル名を決定
-    if args.output:
-        out_path = Path(args.output)
-    else:
-        fname = f"{cfg.topology}_meta{cfg.meta_influence}_seed{args.seed}.csv"
-        out_path = cfg.logs_dir / fname
+    # メイン出力ファイル名決定（世代サマリ）
+    summary_fname = f"{cfg.output_base}_seed{args.seed}.csv"
+    summary_path = cfg.output_dir / "csvs" / summary_fname
 
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(out_path, index=False)
+    # ノード履歴とグラフのファイル名
+    node_fname = f"{cfg.output_base}_seed{args.seed}_nodes.csv"
+    node_path = cfg.output_dir / "csvs" / node_fname
 
-    print(f"Saved results to {out_path}")
+    graph_fname = f"{cfg.output_base}_seed{args.seed}_graph.pickle"
+    graph_path = cfg.output_dir / "pickles" / graph_fname
+
+    # 親ディレクトリ作成
+    summary_path.parent.mkdir(parents=True, exist_ok=True)
+    node_path.parent.mkdir(parents=True, exist_ok=True)
+    graph_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # CSV 保存（世代サマリ）
+    df.to_csv(summary_path, index=False)
+
+    # CSV 保存（ノード履歴）
+    node_df.to_csv(node_path, index=False)
+
+    # グラフ保存（ネットワーク構造）
+    with graph_path.open("wb") as f:
+        pickle.dump(graph, f)
+
+    logging.info(f"Saved summary to: {summary_path.resolve()}")
+    logging.info(f"Saved node history to: {node_path.resolve()}")
+    logging.info(f"Saved graph to: {graph_path.resolve()}")
+
     print(df.head())
+
+
+if __name__ == "__main__":
+    # ロギング初期化
+    args = parse_args()
+    cfg = load_config(Path(args.config))
+    setup_logging(cfg.output_dir, cfg.output_base, args.seed)
+    logger = logging.getLogger(__name__)
+    logger.info("===== Simulation Config =====")
+    for k, v in cfg.as_dict().items():
+        logger.info(f"{k}: {v}")
+    logger.info("=================================")
+
+    main()

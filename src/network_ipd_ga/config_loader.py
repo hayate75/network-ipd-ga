@@ -20,28 +20,28 @@ class SimulationConfig:
 
     meta_influence: float
 
-    logs_dir: Path
+    output_dir: Path
+    output_base: str
 
-
-def _find_default_config_path() -> Path:
-    """
-    このファイルの位置から親ディレクトリをたどり、
-    どこかに config/config.yml があればそれを返す。
-    （プロジェクトルートを想定）
-    """
-    here = Path(__file__).resolve()
-    for parent in here.parents:
-        candidate = parent / "config" / "config.yml"
-        if candidate.exists():
-            return candidate
-    raise FileNotFoundError("config/config.yml が見つかりませんでした。")
+    def as_dict(self) -> dict:
+        """ログ出力や保存用に辞書に変換"""
+        return {
+            "num_agents": self.num_agents,
+            "generations": self.generations,
+            "T": self.T,
+            "mutation_rate": self.mutation_rate,
+            "topology": self.topology,
+            "small_world_k": self.small_world_k,
+            "small_world_p": self.small_world_p,
+            "scale_free_m": self.scale_free_m,
+            "meta_influence": self.meta_influence,
+            "output_dir": str(self.output_dir),
+            "output_base": self.output_base,
+        }
 
 
 def load_config(path: Path | None = None) -> SimulationConfig:
     """YAML 設定ファイルを読み込み、SimulationConfig にして返す。"""
-    if path is None:
-        path = _find_default_config_path()
-
     with path.open("r") as f:
         data = yaml.safe_load(f)
 
@@ -55,5 +55,6 @@ def load_config(path: Path | None = None) -> SimulationConfig:
         small_world_p=data["small_world_p"],
         scale_free_m=data["scale_free_m"],
         meta_influence=data["meta_influence"],
-        logs_dir=Path(data["logs_dir"]),
+        output_dir=Path(data["output_dir"]),
+        output_base=data["output_base"],
     )

@@ -2,16 +2,19 @@
 from __future__ import annotations
 from typing import Literal, Tuple, List
 import random
+import logging
+logger = logging.getLogger(__name__)
 
 import pandas as pd
 import networkx as nx
 
 from network_ipd_ga.network import make_lattice_graph, make_small_world_graph, make_scale_free_graph
 from network_ipd_ga.agent import Agent
-from network_ipd_ga.strategy import random_strategy
+from network_ipd_ga.strategy import random_strategy, strategy_to_int, int_to_strategy
 from network_ipd_ga.game import play_ipd
 from network_ipd_ga.ga import reproduce_population
 from network_ipd_ga.metrics import strategy_diversity_entropy, cooperation_rate_from_strategies
+from collections import Counter
 
 
 Topology = Literal["lattice", "small_world", "scale_free"]
@@ -35,7 +38,6 @@ def _build_graph(
     else:
         raise ValueError(f"Unknown topology: {topology}")
 
-
 def run_simulation(
     topology: Topology = "lattice",
     model_type: ModelType = "ga",
@@ -48,7 +50,7 @@ def run_simulation(
     scale_free_m: int = 2,
     seed: int = 0,
     meta_influence: float = 0.3,
-) -> Tuple[pd.DataFrame, nx.Graph, List[Agent]]:
+) -> Tuple[pd.DataFrame, nx.Graph, List[Agent], pd.DataFrame]:
     """
     1つのネットワーク上で、指定したモデルタイプ（標準GA or メタ環境GA）
     による戦略進化をシミュレーションする。
@@ -75,6 +77,7 @@ def run_simulation(
     ]
 
     history_records = []
+    node_history: List[dict] = []
 
     use_meta = (model_type == "meta_ga")
 
@@ -106,6 +109,13 @@ def run_simulation(
         # 戦略多様性（エントロピー）
         diversity = strategy_diversity_entropy(agents)
 
+        # --- 各戦略（000〜111）の個体数をカウント ---
+        counter = Counter(strategy_to_int(a.strategy) for a in agents)
+        strategy_counts = {}
+        for i in range(8):
+            bits = "".join(str(b) for b in int_to_strategy(i))
+            strategy_counts[f"{bits}"] = counter.get(i, 0)
+
         history_records.append(
             {
                 "generation": gen,
@@ -113,8 +123,21 @@ def run_simulation(
                 "strategy_coop_rate": strategy_coop_rate,
                 "diversity": diversity,
                 "avg_payoff": sum(a.payoff for a in agents) / len(agents),
+                **strategy_counts,
             }
         )
+
+        # --- 各ノードの戦略と利得を履歴に保存 ---
+        for a in agents:
+            node_history.append(
+                {
+                    "generation": gen,
+                    "node_id": a.id,
+                    "strategy_int": strategy_to_int(a.strategy),
+                    "strategy_bits": "".join(str(b) for b in a.strategy),
+                    "payoff": a.payoff,
+                }
+            )
 
         # 次世代の戦略を生成（GA + メタ環境）
         reproduce_population(
@@ -125,6 +148,13 @@ def run_simulation(
             use_meta=use_meta,
             meta_influence=meta_influence,
         )
+        logger.info(
+            f"Gen {gen}: coop(real={realized_coop_rate:.3f}, "
+            f"strategy={strategy_coop_rate:.3f}), "
+            f"div={diversity:.3f}, avg_payoff={history_records[-1]['avg_payoff']:.3f}"
+        )
 
     df = pd.DataFrame(history_records)
-    return df, graph, agents
+    node_df = pd.DataFrame(node_history)
+
+    return df, graph, agents, node_df
