@@ -4,53 +4,68 @@ import argparse
 from pathlib import Path
 
 from network_ipd_ga.simulation import run_simulation, Topology, ModelType
-
+from network_ipd_ga.config_loader import load_config
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run a single IPD meta-environment evolution experiment."
+        description="Run a single IPD evolution experiment using a YAML config and a seed."
     )
-    parser.add_argument("--topology", type=str, default="lattice",
-                        choices=["lattice", "small_world", "scale_free"])
-    parser.add_argument("--model", type=str, default="ga",
-                        choices=["ga", "meta_ga"])
-    parser.add_argument("--num_agents", type=int, default=100)
-    parser.add_argument("--generations", type=int, default=100)
-    parser.add_argument("--T", type=int, default=50,
-                        help="Number of IPD rounds per edge per generation.")
-    parser.add_argument("--mutation_rate", type=float, default=0.01)
-    parser.add_argument("--small_world_k", type=int, default=4)
-    parser.add_argument("--small_world_p", type=float, default=0.1)
-    parser.add_argument("--scale_free_m", type=int, default=2)
-    parser.add_argument("--meta_influence", type=float, default=0.3)
-    parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--output_csv", type=str, default="result_single_experiment.csv")
-    return parser.parse_args()
 
+    # 設定ファイルのパス
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="config/config.yml",
+        help="Path to the YAML configuration file.",
+    )
+
+    # 乱数シード
+    parser.add_argument(
+        "--seed",
+        type=int,
+        required=True,
+        help="Random seed for the simulation.",
+    )
+
+    # 出力ログファイル（結果CSV）
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="",
+        help="Output CSV filename. If empty, auto-generate from config settings.",
+    )
+
+    return parser.parse_args()
 
 def main() -> None:
     args = parse_args()
 
+    # 設定ファイル読み込み
+    cfg = load_config(Path(args.config))
+
+    # 実行
     df, graph, agents = run_simulation(
-        topology=args.topology,          # type: ignore[arg-type]
-        model_type=args.model,           # type: ignore[arg-type]
-        num_agents=args.num_agents,
-        generations=args.generations,
-        T=args.T,
-        mutation_rate=args.mutation_rate,
-        small_world_k=args.small_world_k,
-        small_world_p=args.small_world_p,
-        scale_free_m=args.scale_free_m,
+        topology=cfg.topology,
+        num_agents=cfg.num_agents,
+        generations=cfg.generations,
+        T=cfg.T,
+        mutation_rate=cfg.mutation_rate,
+        small_world_k=cfg.small_world_k,
+        small_world_p=cfg.small_world_p,
+        scale_free_m=cfg.scale_free_m,
+        meta_influence=cfg.meta_influence,
         seed=args.seed,
-        meta_influence=args.meta_influence,
     )
 
-    out_path = Path(args.output_csv)
+    # 出力ファイル名を決定
+    if args.output:
+        out_path = Path(args.output)
+    else:
+        fname = f"{cfg.topology}_meta{cfg.meta_influence}_seed{args.seed}.csv"
+        out_path = cfg.logs_dir / fname
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out_path, index=False)
 
     print(f"Saved results to {out_path}")
     print(df.head())
-
-
-if __name__ == "__main__":
-    main()
