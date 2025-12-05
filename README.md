@@ -52,9 +52,7 @@ small_world_k: 4
 small_world_p: 0.1 
 scale_free_m: 2 
 meta_influence: 0.3 
-logs_dir: "results/logs" 
 output_dir: "results/csvs" 
-output_base: "smallworld_meta00"
 ```
 ## Parameter description 
 | パラメータ | 説明 |
@@ -66,8 +64,8 @@ output_base: "smallworld_meta00"
 | **topology** | ネットワーク構造（`lattice` / `small_world` / `scale_free`） |
 | **small_world_k, small_world_p** | Watts–Strogatz 小世界ネットワークのパラメータ |
 | **scale_free_m** | Barabási–Albert スケールフリーの接続数 |
-| **meta_influence** | Meta-GA：最頻戦略と交叉する確率 |
-| **logs_dir, output_dir, output_base** | 出力ディレクトリ, ファイル名 |
+| **meta_influence** | 最頻戦略と交叉する確率 |
+| **output_dir** | 出力ディレクトリ, ファイル名 |
 
 # Output
 
