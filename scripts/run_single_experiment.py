@@ -18,7 +18,7 @@ def to_loglevel(level_str: str) -> int:
         return getattr(logging, level_str)
     raise ValueError(f"Invalid log level: {level_str}")
 
-def setup_logging(output_dir: Path, output_base: str, seed: int, enable_file: bool, log_level: int) -> None:
+def setup_logging(output_base: str, seed: int, enable_file: bool, log_level: int) -> None:
     """
     ログ設定：
     - 標準出力への出力は常に有効
@@ -38,7 +38,7 @@ def setup_logging(output_dir: Path, output_base: str, seed: int, enable_file: bo
     logger.addHandler(stream_handler)
 
     if enable_file:
-        log_dir = output_dir / "logs"
+        log_dir = Path("logs")
         log_dir.mkdir(parents=True, exist_ok=True)
 
         fname = f"{output_base}_seed{seed:04d}.log"
@@ -155,7 +155,6 @@ if __name__ == "__main__":
     log_level = to_loglevel(args.log_level)
 
     setup_logging(
-        Path(cfg.output_dir),
         cfg.output_base,
         args.seed,
         enable_file=args.log_file,
