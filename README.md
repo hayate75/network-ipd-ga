@@ -28,7 +28,8 @@ cd network-ipd-ga
 ```
 ## Step 2 — Create virtual environment & install dependencies
 ```bash 
-uv venv source .venv/bin/activate uv sync 
+uv venv source
+.venv/bin/activate uv sync 
 ```
 
 # How to Run Experiments 
