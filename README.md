@@ -24,8 +24,11 @@ uv --version
 ## Step 1 — Clone project 
 ```bash 
 git clone https://github.com/hayate75/network-ipd-ga.git
-cd network-ipd-ga 
 ```
+```bash
+cd network-ipd-ga
+ ```
+
 ## Step 2 — Create virtual environment & install dependencies
 ```bash 
 uv venv source
