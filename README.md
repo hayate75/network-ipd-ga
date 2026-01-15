@@ -83,8 +83,8 @@ output_dir: "results/csvs"
 
 # Make Figure
 統計データのグラフ化
-```bash 
-uv run scripts/make_figure.py --config configs/sample.yml --seeds 0-9
+```bash
+uv run scripts/make_figure.py --config configs/sample.yml --seeds 42
 ```
 
 ノードの戦略変化を動画化
