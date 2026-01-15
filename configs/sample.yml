@@ -17,5 +17,5 @@ small_world_p: 0.1
 scale_free_m: 2
 
 # Logging directory
-output_dir: results
+output_dir: results2
 output_base: "smallworld_meta00"
