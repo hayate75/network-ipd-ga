@@ -9,7 +9,7 @@ mutation_rate: 0.001
 topology: small_world
 
 # Meta-environment influence (0.0 = OFF → GA, >0.0 = ON → meta-GA)
-meta_influence: 0.0
+meta_influence: 0.1
 
 # Network parameters
 small_world_k: 4
