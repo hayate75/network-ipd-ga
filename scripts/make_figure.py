@@ -145,12 +145,13 @@ def save_metric_plot(df_mean, df_std, x, y, save_path: Path):
     upper = y_mean + y_std
     lower = y_mean - y_std
     plt.fill_between(x_vals, lower, upper, alpha=0.3, label="±1 std")
+    plt.xlabel(x, fontsize=14)
+    plt.ylabel(y, fontsize=14)
+    plt.title(f"Average {y} over {x} (with std band)", fontsize=16)
 
-    plt.xlabel(x)
-    plt.ylabel(y)
-    plt.title(f"Average {y} over {x} (with std band)")
-    plt.grid(True)
-    plt.legend()
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.legend(fontsize=12)
     plt.tight_layout()
 
     save_path.parent.mkdir(parents=True, exist_ok=True)
