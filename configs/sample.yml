@@ -3,13 +3,13 @@ num_agents: 100
 generations: 100
 T: 50
 
-mutation_rate: 0.0
+mutation_rate: 0.01
 
 # "cycle" | "small_world" | "scale_free"
 topology: small_world
 
 # Meta-environment influence (0.0 = OFF → GA, >0.0 = ON → meta-GA)
-meta_influence: 0.1
+meta_influence: 0.0
 
 # Network parameters
 small_world_k: 4
