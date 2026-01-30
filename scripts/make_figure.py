@@ -146,17 +146,26 @@ def save_metric_plot(df_mean, df_std, x, y, save_path: Path):
     lower = y_mean - y_std
     plt.fill_between(x_vals, lower, upper, alpha=0.3, label="±1 std")
 
-    plt.xlabel(x)(x, fontsize=14)
-    plt.ylabel(y)(y, fontsize=14)
-    plt.title(f"Average {y} over {x} (with std band)")
+    # ===== フォント設定 =====
+    plt.xlabel(x, fontsize=15)   # ← 軸ラベル 1.5倍
+    plt.ylabel(y, fontsize=15)   # ← 軸ラベル 1.5倍
+
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+
+    # タイトルは消す（重要）
+    # plt.title(...) ← 書かない
+
     plt.grid(True)
-    plt.legend()
+    plt.legend(fontsize=12)
     plt.tight_layout()
 
     save_path.parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(save_path)
+    plt.savefig(save_path, bbox_inches="tight")
     plt.close()
+
     print(f"[SAVE] {save_path}")
+
 
 def save_strategy_distribution_plot_with_band(
     df_prop_mean: pd.DataFrame,
